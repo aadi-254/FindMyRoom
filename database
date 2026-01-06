@@ -7,6 +7,7 @@ USE rentAhouse;
 -- ===============================
 CREATE TABLE users (
     user_id INT AUTO_INCREMENT PRIMARY KEY,
+    points INT DEFAULT 0,
     full_name VARCHAR(100) NOT NULL,
     email VARCHAR(100) UNIQUE NOT NULL,
     password VARCHAR(255),
@@ -27,6 +28,7 @@ CREATE TABLE listings (
     description TEXT,
     rent DECIMAL(10,2) NOT NULL,
     city VARCHAR(100) NOT NULL,
+    address VARCHAR(255) NOT NULL,
     latitude DECIMAL(10,6),
     longitude DECIMAL(10,6),
     room_type ENUM('1BHK', '2BHK', 'PG', 'Shared', 'Hostel'),
@@ -66,7 +68,7 @@ CREATE TABLE feedback (
 );
 
 -- ===============================
--- 6. REQUESTS TABLE
+-- 6. REQUESTS TABLE (for viewing/contacting)
 -- ===============================
 CREATE TABLE requests (
     request_id INT AUTO_INCREMENT PRIMARY KEY,
@@ -82,6 +84,33 @@ CREATE TABLE requests (
 );
 
 -- ===============================
+-- 6b. LEAD_REQUESTS TABLE (for gamification)
+-- ===============================
+CREATE TABLE lead_requests (
+    lead_request_id INT AUTO_INCREMENT PRIMARY KEY,
+    requester_id INT NOT NULL,
+    requester_name VARCHAR(100) NOT NULL,
+    owner_name VARCHAR(100) NOT NULL,
+    owner_phone VARCHAR(15) NOT NULL,
+    owner_email VARCHAR(100),
+    property_address VARCHAR(255) NOT NULL,
+    city VARCHAR(100) NOT NULL,
+    room_type ENUM('1BHK', '2BHK', 'PG', 'Shared', 'Hostel'),
+    expected_rent DECIMAL(10,2),
+    latitude DECIMAL(10,6),
+    longitude DECIMAL(10,6),
+    additional_details TEXT,
+    confirmed BOOLEAN DEFAULT FALSE,
+    listing_id INT DEFAULT NULL,
+    points_awarded BOOLEAN DEFAULT FALSE,
+    reward_points INT DEFAULT 0,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (requester_id) REFERENCES users(user_id) ON DELETE CASCADE,
+    FOREIGN KEY (listing_id) REFERENCES listings(listing_id) ON DELETE SET NULL
+);
+
+-- ===============================
 -- 7. CHATS TABLE (optional)
 -- ===============================
 CREATE TABLE chats (
@@ -93,3 +122,6 @@ CREATE TABLE chats (
     FOREIGN KEY (sender_id) REFERENCES users(user_id) ON DELETE CASCADE,
     FOREIGN KEY (receiver_id) REFERENCES users(user_id) ON DELETE CASCADE
 );
+
+=======================================================
+here : 

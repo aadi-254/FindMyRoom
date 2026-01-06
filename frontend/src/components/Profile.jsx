@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react'
 import './Profile.css'
+import MyLeadRequests from './MyLeadRequests'
 
 const Profile = ({ user, onUserUpdate, onBackToSearch }) => {
   const [isEditing, setIsEditing] = useState(false)
+  const [activeTab, setActiveTab] = useState('profile') // 'profile' or 'leads'
   const [formData, setFormData] = useState({
     full_name: '',
     email: '',
@@ -334,6 +336,13 @@ const Profile = ({ user, onUserUpdate, onBackToSearch }) => {
           <h3>Account Statistics</h3>
           <div className="stats-grid">
             <div className="stat-item">
+              <div className="stat-icon">🏆</div>
+              <div className="stat-info">
+                <span className="stat-label">Reward Points</span>
+                <span className="stat-value highlight-points">{user?.points || 0}</span>
+              </div>
+            </div>
+            <div className="stat-item">
               <div className="stat-icon">📅</div>
               <div className="stat-info">
                 <span className="stat-label">Joined</span>
@@ -354,15 +363,29 @@ const Profile = ({ user, onUserUpdate, onBackToSearch }) => {
                 <span className="stat-value">Active</span>
               </div>
             </div>
-            <div className="stat-item">
-              <div className="stat-icon">📧</div>
-              <div className="stat-info">
-                <span className="stat-label">Email</span>
-                <span className="stat-value">Verified</span>
-              </div>
-            </div>
           </div>
         </div>
+
+        {/* Tabs for Profile and Lead Requests */}
+        <div className="profile-tabs">
+          <button 
+            className={`tab-button ${activeTab === 'profile' ? 'active' : ''}`}
+            onClick={() => setActiveTab('profile')}
+          >
+            👤 Profile Details
+          </button>
+          <button 
+            className={`tab-button ${activeTab === 'leads' ? 'active' : ''}`}
+            onClick={() => setActiveTab('leads')}
+          >
+            🎯 My Lead Requests
+          </button>
+        </div>
+
+        {/* Tab Content */}
+        {activeTab === 'leads' && (
+          <MyLeadRequests userId={user?.user_id} />
+        )}
       </div>
     </div>
   )

@@ -9,11 +9,12 @@ import Navbar from './components/Navbar'
 import Profile from './components/Profile'
 import Dashboard from './components/Dashboard'
 import RequestHistory from './components/RequestHistory'
+import LeadRequestForm from './components/LeadRequestForm'
 
 function App() {
   const [user, setUser] = useState(null)
   const [isLoading, setIsLoading] = useState(true)
-  const [currentView, setCurrentView] = useState('login') // 'login', 'signup', 'search', 'profile', 'dashboard', 'requests'
+  const [currentView, setCurrentView] = useState('login') // 'login', 'signup', 'search', 'profile', 'dashboard', 'requests', 'lead-request'
 
   // Check if user is logged in on app start
   useEffect(() => {
@@ -63,6 +64,10 @@ function App() {
     setCurrentView('requests')
   }
   
+  const switchToLeadRequest = () => {
+    setCurrentView('lead-request')
+  }
+  
   // Smart navigation based on user role
   const switchToHome = () => {
     if (user?.role === 'Seller') {
@@ -86,7 +91,7 @@ function App() {
 
   return (
     <div className="App">
-      {user && <Navbar user={user} onLogout={handleLogout} onSwitchToProfile={switchToProfile} onSwitchToHome={switchToHome} onSwitchToRequests={switchToRequests} />}
+      {user && <Navbar user={user} onLogout={handleLogout} onSwitchToProfile={switchToProfile} onSwitchToHome={switchToHome} onSwitchToRequests={switchToRequests} onSwitchToLeadRequest={switchToLeadRequest} />}
       
       {/* Render current view */}
       {currentView === 'login' && (
@@ -117,6 +122,10 @@ function App() {
       
       {currentView === 'requests' && user && (
         <RequestHistory user={user} />
+      )}
+      
+      {currentView === 'lead-request' && user && (
+        <LeadRequestForm />
       )}
     </div>
   )

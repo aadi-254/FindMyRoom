@@ -44,8 +44,8 @@
 .profile-content {
   max-width: 1200px;
   margin: 0 auto;
-  display: grid;
-  grid-template-columns: 2fr 1fr;
+  display: flex;
+  flex-direction: column;
   gap: 30px;
 }
 
@@ -54,7 +54,9 @@
   border-radius: 20px;
   box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
   padding: 40px;
-  height: fit-content;
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
 }
 
 .profile-avatar-section {
@@ -315,7 +317,9 @@
   border-radius: 20px;
   box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
   padding: 30px;
-  height: fit-content;
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
 }
 
 .stats-card h3 {
@@ -328,8 +332,8 @@
 }
 
 .stats-grid {
-  display: flex;
-  flex-direction: column;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
   gap: 20px;
 }
 
@@ -380,23 +384,6 @@
 }
 
 /* Responsive Design */
-@media (max-width: 1024px) {
-  .profile-content {
-    grid-template-columns: 1fr;
-    gap: 20px;
-  }
-  
-  .stats-card {
-    order: -1;
-  }
-  
-  .stats-grid {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 15px;
-  }
-}
-
 @media (max-width: 768px) {
   .profile-container {
     padding: 15px;
@@ -404,6 +391,8 @@
   
   .profile-header {
     margin-bottom: 20px;
+    flex-direction: column;
+    align-items: flex-start;
   }
   
   .profile-header h1 {
@@ -436,7 +425,17 @@
   }
   
   .stats-grid {
-    grid-template-columns: 1fr;
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .profile-tabs {
+    flex-direction: column;
+    gap: 5px;
+  }
+
+  .tab-button {
+    width: 100%;
+    padding: 12px 20px;
   }
 }
 
@@ -471,4 +470,50 @@
     padding: 12px 24px;
     font-size: 14px;
   }
+}
+
+/* New styles for tabs and points */
+.highlight-points {
+  color: #667eea !important;
+  font-size: 1.8rem !important;
+  font-weight: 700 !important;
+}
+
+.profile-tabs {
+  max-width: 1200px;
+  margin: 30px auto 20px auto;
+  display: flex;
+  gap: 10px;
+  background: white;
+  padding: 10px;
+  border-radius: 12px;
+  box-shadow: 0 2px 15px rgba(0, 0, 0, 0.1);
+}
+
+.tab-button {
+  flex: 1;
+  padding: 15px 30px;
+  border: none;
+  background: transparent;
+  color: #666;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  border-radius: 8px;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.tab-button:hover {
+  background: #f5f7fa;
+  color: #333;
+}
+
+.tab-button.active {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
 }

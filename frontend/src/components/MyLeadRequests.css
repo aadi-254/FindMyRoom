@@ -1,0 +1,238 @@
+.my-lead-requests {
+    padding: 20px;
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+.points-banner {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 30px;
+    border-radius: 16px;
+    margin-bottom: 40px;
+    box-shadow: 0 8px 20px rgba(102, 126, 234, 0.3);
+}
+
+.points-display {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    margin-bottom: 15px;
+}
+
+.points-icon {
+    font-size: 3rem;
+    animation: bounce 2s infinite;
+}
+
+@keyframes bounce {
+    0%, 100% {
+        transform: translateY(0);
+    }
+    50% {
+        transform: translateY(-10px);
+    }
+}
+
+.points-info {
+    display: flex;
+    flex-direction: column;
+}
+
+.points-label {
+    font-size: 1rem;
+    opacity: 0.9;
+    margin-bottom: 5px;
+}
+
+.points-value {
+    font-size: 3rem;
+    font-weight: bold;
+    line-height: 1;
+}
+
+.points-description {
+    font-size: 1rem;
+    opacity: 0.95;
+    margin: 0;
+}
+
+.lead-requests-section {
+    margin-top: 30px;
+}
+
+.lead-requests-section h2 {
+    color: #2c3e50;
+    font-size: 1.8rem;
+    margin-bottom: 25px;
+    padding-bottom: 10px;
+    border-bottom: 3px solid #3498db;
+}
+
+.loading {
+    text-align: center;
+    padding: 40px;
+    color: #666;
+    font-size: 1.1rem;
+}
+
+.empty-state {
+    text-align: center;
+    padding: 60px 20px;
+    background: #f8f9fa;
+    border-radius: 12px;
+    border: 2px dashed #ddd;
+}
+
+.empty-icon {
+    font-size: 4rem;
+    display: block;
+    margin-bottom: 20px;
+}
+
+.empty-state p {
+    color: #666;
+    font-size: 1.1rem;
+    margin: 10px 0;
+}
+
+.empty-hint {
+    color: #3498db !important;
+    font-weight: 600;
+}
+
+.lead-requests-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+    gap: 25px;
+}
+
+.lead-request-card {
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 2px 15px rgba(0, 0, 0, 0.1);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    overflow: hidden;
+}
+
+.lead-request-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+}
+
+.card-header {
+    padding: 20px;
+    background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+    border-bottom: 2px solid #e0e0e0;
+}
+
+.card-header h3 {
+    color: #2c3e50;
+    font-size: 1.2rem;
+    margin: 0 0 10px 0;
+}
+
+.status-badge {
+    display: inline-block;
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-size: 0.85rem;
+    font-weight: 600;
+}
+
+.status-badge.confirmed {
+    background-color: #d4edda;
+    color: #155724;
+}
+
+.status-badge.pending {
+    background-color: #fff3cd;
+    color: #856404;
+}
+
+.card-body {
+    padding: 20px;
+}
+
+.detail-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 0;
+    border-bottom: 1px solid #f0f0f0;
+}
+
+.detail-row:last-child {
+    border-bottom: none;
+}
+
+.detail-row .label {
+    color: #666;
+    font-weight: 600;
+    font-size: 0.9rem;
+}
+
+.detail-row .value {
+    color: #2c3e50;
+    font-weight: 500;
+}
+
+.reward-info {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: linear-gradient(135deg, #ffeaa7 0%, #fdcb6e 100%);
+    padding: 12px;
+    border-radius: 8px;
+    margin-top: 15px;
+    font-weight: 600;
+    color: #2c3e50;
+}
+
+.reward-icon {
+    font-size: 1.5rem;
+}
+
+.card-footer {
+    padding: 15px 20px;
+    background: #f8f9fa;
+    border-top: 1px solid #e0e0e0;
+}
+
+.submitted-date {
+    color: #666;
+    font-size: 0.85rem;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .my-lead-requests {
+        padding: 15px;
+    }
+
+    .points-banner {
+        padding: 20px;
+    }
+
+    .points-display {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 10px;
+    }
+
+    .points-icon {
+        font-size: 2rem;
+    }
+
+    .points-value {
+        font-size: 2rem;
+    }
+
+    .lead-requests-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .lead-requests-section h2 {
+        font-size: 1.4rem;
+    }
+}

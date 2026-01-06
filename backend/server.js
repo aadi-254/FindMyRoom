@@ -4,6 +4,7 @@ import db from './config/database.js';
 import authRoutes from './routes/auth.js';
 import listingsRoutes from './routes/listings.js';
 import requestsRoutes from './routes/requests.js';
+import leadRequestsRoutes from './routes/leadRequests.js';
 import express from 'express';
 
 dotenv.config();
@@ -78,6 +79,7 @@ async function startServer() {
   app.use('/api/auth', authRoutes);
   app.use('/api/listings', listingsRoutes);
   app.use('/api/requests', requestsRoutes);
+  app.use('/api/lead-requests', leadRequestsRoutes);
 
   app.listen(PORT, () => console.log(`Server is running on port ${PORT}`));
 }

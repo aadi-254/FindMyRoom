@@ -1,7 +1,7 @@
 import React, { useState } from 'react'
 import './Navbar.css'
 
-const Navbar = ({ user, onLogout, onSwitchToProfile, onSwitchToHome, onSwitchToRequests }) => {
+const Navbar = ({ user, onLogout, onSwitchToProfile, onSwitchToHome, onSwitchToRequests, onSwitchToLeadRequest }) => {
   const [isMenuOpen, setIsMenuOpen] = useState(false)
 
   const handleLogout = (e) => {
@@ -62,6 +62,16 @@ const Navbar = ({ user, onLogout, onSwitchToProfile, onSwitchToHome, onSwitchToR
     console.log('Requests button clicked!')
     if (onSwitchToRequests) {
       onSwitchToRequests()
+    }
+    setIsMenuOpen(false)
+  }
+
+  const handleLeadRequestClick = (e) => {
+    e.preventDefault()
+    e.stopPropagation()
+    console.log('Lead Request button clicked!')
+    if (onSwitchToLeadRequest) {
+      onSwitchToLeadRequest()
     }
     setIsMenuOpen(false)
   }
@@ -129,6 +139,38 @@ const Navbar = ({ user, onLogout, onSwitchToProfile, onSwitchToHome, onSwitchToR
             📋 Requests
           </button>
 
+          {/* Lead Request Button */}
+          <button 
+            className="lead-request-btn-navbar"
+            onClick={() => {
+              console.log('Direct navbar lead request button clicked!')
+              onSwitchToLeadRequest && onSwitchToLeadRequest()
+            }}
+            style={{
+              background: 'linear-gradient(135deg, #f39c12 0%, #e67e22 100%)',
+              color: 'white',
+              border: 'none',
+              borderRadius: '8px',
+              padding: '6px 12px',
+              fontSize: '12px',
+              fontWeight: '600',
+              cursor: 'pointer',
+              marginRight: '10px',
+              transition: 'all 0.3s ease',
+              boxShadow: '0 2px 8px rgba(243, 156, 18, 0.3)'
+            }}
+            onMouseOver={(e) => {
+              e.target.style.transform = 'translateY(-2px)'
+              e.target.style.boxShadow = '0 4px 12px rgba(243, 156, 18, 0.4)'
+            }}
+            onMouseOut={(e) => {
+              e.target.style.transform = 'translateY(0)'
+              e.target.style.boxShadow = '0 2px 8px rgba(243, 156, 18, 0.3)'
+            }}
+          >
+            🎯 Earn Rewards
+          </button>
+
           {/* Direct Logout Button for Testing */}
         
 
@@ -157,6 +199,10 @@ const Navbar = ({ user, onLogout, onSwitchToProfile, onSwitchToHome, onSwitchToR
                 
                 <button className="dropdown-item" onClick={handleHomeClick}>
                   🏠 {user.role === 'Seller' ? 'Dashboard' : 'Search Rooms'}
+                </button>
+               
+                <button className="dropdown-item" onClick={handleLeadRequestClick}>
+                  🎯 Suggest Property - Earn Rewards
                 </button>
                
                 <button className="dropdown-item">
