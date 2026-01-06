@@ -1,0 +1,95 @@
+-- Create Database
+CREATE DATABASE rentAhouse;
+USE rentAhouse;
+
+-- ===============================
+-- 1. USERS TABLE
+-- ===============================
+CREATE TABLE users (
+    user_id INT AUTO_INCREMENT PRIMARY KEY,
+    full_name VARCHAR(100) NOT NULL,
+    email VARCHAR(100) UNIQUE NOT NULL,
+    password VARCHAR(255),
+    role ENUM('Seller', 'Taker') NOT NULL,
+    phone VARCHAR(15),
+    gender ENUM('Male', 'Female', 'Other'),
+    bio TEXT,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+
+-- ===============================
+-- 2. LISTINGS TABLE
+-- ===============================
+CREATE TABLE listings (
+    listing_id INT AUTO_INCREMENT PRIMARY KEY,
+    user_id INT NOT NULL,
+    title VARCHAR(150) NOT NULL,
+    description TEXT,
+    rent DECIMAL(10,2) NOT NULL,
+    city VARCHAR(100) NOT NULL,
+    latitude DECIMAL(10,6),
+    longitude DECIMAL(10,6),
+    room_type ENUM('1BHK', '2BHK', 'PG', 'Shared', 'Hostel'),
+    gender_pref ENUM('Male', 'Female', 'Any'),
+    available_from DATE,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE
+);
+
+
+
+-- ===============================
+-- 4. BOOKMARKS TABLE
+-- ===============================
+CREATE TABLE bookmarks (
+    bookmark_id INT AUTO_INCREMENT PRIMARY KEY,
+    user_id INT NOT NULL,
+    listing_id INT NOT NULL,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE,
+    FOREIGN KEY (listing_id) REFERENCES listings(listing_id) ON DELETE CASCADE
+);
+
+-- ===============================
+-- 5. FEEDBACK TABLE
+-- ===============================
+CREATE TABLE feedback (
+    feedback_id INT AUTO_INCREMENT PRIMARY KEY,
+    from_user_id INT NOT NULL,
+    to_user_id INT NOT NULL,
+    rating INT CHECK (rating BETWEEN 1 AND 5),
+    comment TEXT,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (from_user_id) REFERENCES users(user_id) ON DELETE CASCADE,
+    FOREIGN KEY (to_user_id) REFERENCES users(user_id) ON DELETE CASCADE
+);
+
+-- ===============================
+-- 6. REQUESTS TABLE
+-- ===============================
+CREATE TABLE requests (
+    request_id INT AUTO_INCREMENT PRIMARY KEY,
+    sender_id INT NOT NULL,
+    receiver_id INT NOT NULL,
+    listing_id INT NOT NULL,
+    status ENUM('Pending', 'Accepted', 'Rejected') DEFAULT 'Pending',
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (sender_id) REFERENCES users(user_id) ON DELETE CASCADE,
+    FOREIGN KEY (receiver_id) REFERENCES users(user_id) ON DELETE CASCADE,
+    FOREIGN KEY (listing_id) REFERENCES listings(listing_id) ON DELETE CASCADE
+);
+
+-- ===============================
+-- 7. CHATS TABLE (optional)
+-- ===============================
+CREATE TABLE chats (
+    chat_id INT AUTO_INCREMENT PRIMARY KEY,
+    sender_id INT NOT NULL,
+    receiver_id INT NOT NULL,
+    message TEXT NOT NULL,
+    sent_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (sender_id) REFERENCES users(user_id) ON DELETE CASCADE,
+    FOREIGN KEY (receiver_id) REFERENCES users(user_id) ON DELETE CASCADE
+);
