@@ -61,7 +61,7 @@ router.get('/available-houses', async (req, res) => {
         }
 
         const [result] = await pool.query(
-            'SELECT COUNT(*) as count FROM listings WHERE area = ? AND available = TRUE',
+            'SELECT COUNT(*) as count FROM listings WHERE city = ?',
             [area]
         );
 
@@ -82,16 +82,19 @@ router.get('/available-houses', async (req, res) => {
 // Get all unique areas
 router.get('/areas', async (req, res) => {
     try {
+        console.log('📍 Fetching areas from listings...');
         const [areas] = await pool.query(
-            'SELECT DISTINCT area FROM listings WHERE available = TRUE ORDER BY area'
+            'SELECT DISTINCT city as area FROM listings ORDER BY city'
         );
+        
+        console.log('Found areas:', areas);
 
         res.json({
             success: true,
             areas: areas.map(row => row.area)
         });
     } catch (error) {
-        console.error('Error getting areas:', error);
+        console.error('❌ Error getting areas:', error);
         res.status(500).json({
             success: false,
             message: 'Server error'
@@ -162,8 +165,12 @@ router.get('/check-access', async (req, res) => {
 // Process payment (dummy)
 router.post('/process-payment', async (req, res) => {
     try {
+        console.log('💳 Processing payment request:', req.body);
+        
         const { area, housesToView, user_id } = req.body;
         const userId = user_id || req.user?.user_id;
+
+        console.log('User ID:', userId);
 
         if (!userId) {
             return res.status(401).json({
@@ -181,9 +188,13 @@ router.post('/process-payment', async (req, res) => {
 
         // Get user location from request
         const { latitude, longitude } = req.body;
+        
+        console.log('Payment details:', { userId, area, housesToView, latitude, longitude });
 
         // Calculate amount
         const amount = calculatePrice(housesToView);
+        
+        console.log('Calculated amount:', amount);
 
         // Insert payment record with user location
         const [result] = await pool.query(
@@ -191,6 +202,8 @@ router.post('/process-payment', async (req, res) => {
              VALUES (?, ?, ?, ?, 'completed', ?, ?)`,
             [userId, area, housesToView, amount, latitude || null, longitude || null]
         );
+        
+        console.log('✅ Payment recorded successfully, ID:', result.insertId);
 
         res.json({
             success: true,
@@ -204,10 +217,16 @@ router.post('/process-payment', async (req, res) => {
             }
         });
     } catch (error) {
-        console.error('Error processing payment:', error);
+        console.error('❌ Error processing payment:', error);
+        console.error('Error details:', {
+            message: error.message,
+            code: error.code,
+            sqlMessage: error.sqlMessage
+        });
         res.status(500).json({
             success: false,
-            message: 'Payment processing failed'
+            message: 'Payment processing failed',
+            error: error.message
         });
     }
 });

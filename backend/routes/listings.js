@@ -22,10 +22,15 @@ function calculateDistance(lat1, lon1, lat2, lon2) {
 // Middleware to check payment access
 async function checkPaymentAccess(req, res, next) {
   try {
-    const userId = req.user?.user_id;
+    const userId = req.query.user_id || req.user?.user_id;
     const { area } = req.query;
 
     if (!userId) {
+      req.hasPaymentAccess = false;
+      return next();
+    }
+
+    if (!area) {
       req.hasPaymentAccess = false;
       return next();
     }
@@ -72,8 +77,15 @@ router.get('/user/:userId', async (req, res) => {
 // Get all listings (for search/browse - takers)
 router.get('/', checkPaymentAccess, async (req, res) => {
   try {
-    const { city, room_type, min_rent, max_rent, gender_pref, area } = req.query;
+    const { city, room_type, min_rent, max_rent, gender_pref, area, user_id } = req.query;
     const hasAccess = req.hasPaymentAccess;
+    
+    console.log('📊 Listings request:', { 
+      user_id, 
+      area, 
+      hasAccess, 
+      activePayment: req.activePayment 
+    });
     
     let query = `
       SELECT l.*, u.full_name as owner_name, u.email as owner_email, u.phone as owner_phone
@@ -83,9 +95,9 @@ router.get('/', checkPaymentAccess, async (req, res) => {
     `;
     const queryParams = [];
 
-    // Filter by area if specified
+    // Filter by area (using city column) if specified
     if (area) {
-      query += ' AND l.area = ?';
+      query += ' AND l.city = ?';
       queryParams.push(area);
     }
 
@@ -116,11 +128,23 @@ router.get('/', checkPaymentAccess, async (req, res) => {
 
     const [listings] = await pool.query(query, queryParams);
     
+    console.log(`🏠 Found ${listings.length} listings before filtering`);
+    
     // Calculate distances and sort by proximity if user has payment with location
     let sortedListings = listings;
     if (hasAccess && req.activePayment) {
       const userLat = req.activePayment.user_latitude;
       const userLng = req.activePayment.user_longitude;
+      const housesToView = req.activePayment.houses_to_view;
+      const housesViewed = req.activePayment.houses_viewed;
+      const remaining = housesToView - housesViewed;
+      
+      console.log(`💰 Payment details:`, { 
+        housesToView, 
+        housesViewed, 
+        remaining,
+        userLocation: { lat: userLat, lng: userLng }
+      });
       
       // Calculate distance for each listing
       if (userLat && userLng) {
@@ -136,21 +160,25 @@ router.get('/', checkPaymentAccess, async (req, res) => {
           if (b.distance === null) return -1;
           return a.distance - b.distance;
         });
+        
+        console.log(`📍 Sorted by distance, limiting to ${remaining} houses`);
       } else {
         // If no user location, sort by creation date
         sortedListings = listings.sort((a, b) => 
           new Date(b.created_at) - new Date(a.created_at)
         );
+        console.log(`📅 No user location, sorted by date, limiting to ${remaining} houses`);
       }
       
       // Limit to remaining houses
-      const remaining = req.activePayment.houses_to_view - req.activePayment.houses_viewed;
       sortedListings = sortedListings.slice(0, remaining);
+      console.log(`✂️ After limiting: ${sortedListings.length} houses`);
     } else {
       // No payment access - return limited results sorted by date
       sortedListings = listings.sort((a, b) => 
         new Date(b.created_at) - new Date(a.created_at)
       );
+      console.log(`🔒 No payment access, returning ${sortedListings.length} houses with limited data`);
     }
     
     // Return limited data if user hasn't paid
@@ -160,7 +188,7 @@ router.get('/', checkPaymentAccess, async (req, res) => {
         title: listing.title,
         rent: listing.rent,
         city: listing.city,
-        area: listing.area,
+        area: listing.city, // Use city as area since listings table doesn't have area column
         room_type: listing.room_type,
         gender_pref: listing.gender_pref,
         latitude: listing.latitude,
@@ -179,6 +207,7 @@ router.get('/', checkPaymentAccess, async (req, res) => {
     // Return full data for paid users
     const fullListings = sortedListings.map(listing => ({
       ...listing,
+      area: listing.city, // Use city as area
       isPaidAccess: true,
       distanceKm: listing.distance ? listing.distance.toFixed(2) : null
     }));

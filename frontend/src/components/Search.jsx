@@ -2,7 +2,7 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react'
 import PropertyDetailsModal from './PropertyDetailsModal'
 
-const Search = ({ user }) => {
+const Search = ({ user, selectedArea, accessInfo }) => {
   const [map, setMap] = useState(null)
   const [searchInput, setSearchInput] = useState('')
   const [geocoder, setGeocoder] = useState(null)
@@ -46,6 +46,16 @@ const Search = ({ user }) => {
     try {
       const queryParams = new URLSearchParams()
       
+      // Add area parameter if available (for payment-based filtering)
+      if (selectedArea) {
+        queryParams.append('area', selectedArea)
+      }
+      
+      // Add user_id for payment verification
+      if (user && user.user_id) {
+        queryParams.append('user_id', user.user_id)
+      }
+      
       Object.entries(filters).forEach(([key, value]) => {
         if (value && value.toString().trim()) {
           queryParams.append(key, value.toString().trim())
@@ -76,6 +86,13 @@ const Search = ({ user }) => {
   useEffect(() => {
     fetchProperties()
   }, [])
+
+  // Reload properties when selectedArea changes (for payment-based access)
+  useEffect(() => {
+    if (selectedArea) {
+      fetchProperties(searchFilters)
+    }
+  }, [selectedArea])
 
   // Calculate distance between two coordinates using Haversine formula
   const calculateDistance = (lat1, lon1, lat2, lon2) => {
