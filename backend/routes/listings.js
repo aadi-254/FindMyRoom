@@ -3,6 +3,54 @@ import pool from '../config/database.js';
 
 const router = express.Router();
 
+// Haversine formula to calculate distance between two points in kilometers
+function calculateDistance(lat1, lon1, lat2, lon2) {
+  if (!lat1 || !lon1 || !lat2 || !lon2) return null;
+  
+  const R = 6371; // Radius of the Earth in kilometers
+  const dLat = (lat2 - lat1) * Math.PI / 180;
+  const dLon = (lon2 - lon1) * Math.PI / 180;
+  const a = 
+    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+    Math.sin(dLon / 2) * Math.sin(dLon / 2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  const distance = R * c; // Distance in kilometers
+  return distance;
+}
+
+// Middleware to check payment access
+async function checkPaymentAccess(req, res, next) {
+  try {
+    const userId = req.user?.user_id;
+    const { area } = req.query;
+
+    if (!userId) {
+      req.hasPaymentAccess = false;
+      return next();
+    }
+
+    // Check if user has active payment for requested area
+    const [payments] = await pool.query(
+      `SELECT payment_id, houses_to_view, houses_viewed, user_latitude, user_longitude 
+       FROM user_payments 
+       WHERE user_id = ? AND area = ? AND payment_status = 'completed'
+       AND houses_viewed < houses_to_view
+       ORDER BY payment_date DESC 
+       LIMIT 1`,
+      [userId, area]
+    );
+
+    req.hasPaymentAccess = payments.length > 0;
+    req.activePayment = payments.length > 0 ? payments[0] : null;
+    next();
+  } catch (error) {
+    console.error('Error checking payment access:', error);
+    req.hasPaymentAccess = false;
+    next();
+  }
+}
+
 // Get all listings for a specific user (seller's listings)
 router.get('/user/:userId', async (req, res) => {
   try {
@@ -22,9 +70,10 @@ router.get('/user/:userId', async (req, res) => {
 });
 
 // Get all listings (for search/browse - takers)
-router.get('/', async (req, res) => {
+router.get('/', checkPaymentAccess, async (req, res) => {
   try {
-    const { city, room_type, min_rent, max_rent, gender_pref } = req.query;
+    const { city, room_type, min_rent, max_rent, gender_pref, area } = req.query;
+    const hasAccess = req.hasPaymentAccess;
     
     let query = `
       SELECT l.*, u.full_name as owner_name, u.email as owner_email, u.phone as owner_phone
@@ -33,6 +82,12 @@ router.get('/', async (req, res) => {
       WHERE 1=1
     `;
     const queryParams = [];
+
+    // Filter by area if specified
+    if (area) {
+      query += ' AND l.area = ?';
+      queryParams.push(area);
+    }
 
     if (city) {
       query += ' AND l.city LIKE ?';
@@ -59,10 +114,76 @@ router.get('/', async (req, res) => {
       queryParams.push(gender_pref);
     }
 
-    query += ' ORDER BY l.created_at DESC';
-
     const [listings] = await pool.query(query, queryParams);
-    res.json(listings);
+    
+    // Calculate distances and sort by proximity if user has payment with location
+    let sortedListings = listings;
+    if (hasAccess && req.activePayment) {
+      const userLat = req.activePayment.user_latitude;
+      const userLng = req.activePayment.user_longitude;
+      
+      // Calculate distance for each listing
+      if (userLat && userLng) {
+        sortedListings = listings.map(listing => {
+          const distance = calculateDistance(
+            userLat, userLng,
+            listing.latitude, listing.longitude
+          );
+          return { ...listing, distance };
+        }).sort((a, b) => {
+          // Sort by distance (closest first), nulls at the end
+          if (a.distance === null) return 1;
+          if (b.distance === null) return -1;
+          return a.distance - b.distance;
+        });
+      } else {
+        // If no user location, sort by creation date
+        sortedListings = listings.sort((a, b) => 
+          new Date(b.created_at) - new Date(a.created_at)
+        );
+      }
+      
+      // Limit to remaining houses
+      const remaining = req.activePayment.houses_to_view - req.activePayment.houses_viewed;
+      sortedListings = sortedListings.slice(0, remaining);
+    } else {
+      // No payment access - return limited results sorted by date
+      sortedListings = listings.sort((a, b) => 
+        new Date(b.created_at) - new Date(a.created_at)
+      );
+    }
+    
+    // Return limited data if user hasn't paid
+    if (!hasAccess) {
+      const limitedListings = sortedListings.map(listing => ({
+        listing_id: listing.listing_id,
+        title: listing.title,
+        rent: listing.rent,
+        city: listing.city,
+        area: listing.area,
+        room_type: listing.room_type,
+        gender_pref: listing.gender_pref,
+        latitude: listing.latitude,
+        longitude: listing.longitude,
+        created_at: listing.created_at,
+        // Hide sensitive information
+        description: '🔒 Payment required to view full details',
+        owner_name: '🔒 Hidden',
+        owner_email: '🔒 Hidden',
+        owner_phone: '🔒 Hidden',
+        isPaidAccess: false
+      }));
+      return res.json(limitedListings);
+    }
+
+    // Return full data for paid users
+    const fullListings = sortedListings.map(listing => ({
+      ...listing,
+      isPaidAccess: true,
+      distanceKm: listing.distance ? listing.distance.toFixed(2) : null
+    }));
+    
+    res.json(fullListings);
   } catch (error) {
     console.error('Error fetching listings:', error);
     res.status(500).json({ message: 'Internal server error' });
@@ -78,6 +199,7 @@ router.post('/', async (req, res) => {
       description,
       rent,
       city,
+      address,
       room_type,
       gender_pref,
       available_from,
@@ -88,23 +210,24 @@ router.post('/', async (req, res) => {
     const userId = user_id;
 
     // Validate required fields
-    if (!title || !rent || !city || !available_from) {
+    if (!title || !rent || !city || !address || !available_from) {
       return res.status(400).json({ 
-        message: 'Title, rent, city, and available date are required' 
+        message: 'Title, rent, city, address, and available date are required' 
       });
     }
 
     const [result] = await pool.query(
       `INSERT INTO listings 
-       (user_id, title, description, rent, city, latitude, longitude, 
+       (user_id, title, description, rent, city, address, latitude, longitude, 
         room_type, gender_pref, available_from) 
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         userId,
         title,
         description,
         rent,
         city,
+        address,
         latitude || null,
         longitude || null,
         room_type || '1BHK',
@@ -145,6 +268,7 @@ router.put('/:listingId', async (req, res) => {
       description,
       rent,
       city,
+      address,
       room_type,
       gender_pref,
       available_from,
@@ -154,7 +278,7 @@ router.put('/:listingId', async (req, res) => {
 
     await pool.query(
       `UPDATE listings SET 
-       title = ?, description = ?, rent = ?, city = ?, 
+       title = ?, description = ?, rent = ?, city = ?, address = ?,
        latitude = ?, longitude = ?, room_type = ?, 
        gender_pref = ?, available_from = ?, updated_at = CURRENT_TIMESTAMP
        WHERE listing_id = ?`,
@@ -163,6 +287,7 @@ router.put('/:listingId', async (req, res) => {
         description,
         rent,
         city,
+        address,
         latitude,
         longitude,
         room_type,
@@ -206,9 +331,10 @@ router.delete('/:listingId', async (req, res) => {
 });
 
 // Get a specific listing by ID
-router.get('/:listingId', async (req, res) => {
+router.get('/:listingId', checkPaymentAccess, async (req, res) => {
   try {
     const { listingId } = req.params;
+    const hasAccess = req.hasPaymentAccess;
 
     const [listings] = await pool.query(
       `SELECT l.*, u.full_name as owner_name, u.email as owner_email, u.phone as owner_phone
@@ -222,7 +348,41 @@ router.get('/:listingId', async (req, res) => {
       return res.status(404).json({ message: 'Listing not found' });
     }
 
-    res.json(listings[0]);
+    const listing = listings[0];
+
+    // If user doesn't have payment access, return limited data
+    if (!hasAccess) {
+      return res.json({
+        listing_id: listing.listing_id,
+        title: listing.title,
+        rent: listing.rent,
+        city: listing.city,
+        area: listing.area,
+        room_type: listing.room_type,
+        gender_pref: listing.gender_pref,
+        latitude: listing.latitude,
+        longitude: listing.longitude,
+        created_at: listing.created_at,
+        description: '🔒 Payment required to view full details',
+        owner_name: '🔒 Hidden',
+        owner_email: '🔒 Hidden',
+        owner_phone: '🔒 Hidden',
+        isPaidAccess: false
+      });
+    }
+
+    // Increment houses_viewed count for paid access
+    if (req.activePayment) {
+      await pool.query(
+        'UPDATE user_payments SET houses_viewed = houses_viewed + 1 WHERE payment_id = ?',
+        [req.activePayment.payment_id]
+      );
+    }
+
+    res.json({
+      ...listing,
+      isPaidAccess: true
+    });
   } catch (error) {
     console.error('Error fetching listing:', error);
     res.status(500).json({ message: 'Internal server error' });

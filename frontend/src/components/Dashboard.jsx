@@ -1,5 +1,16 @@
 import React, { useState, useEffect } from 'react'
 import './Dashboard.css'
+import { MapContainer, TileLayer, Marker, useMapEvents } from 'react-leaflet'
+import 'leaflet/dist/leaflet.css'
+import L from 'leaflet'
+
+// Fix default marker icon issue with Leaflet in React
+delete L.Icon.Default.prototype._getIconUrl
+L.Icon.Default.mergeOptions({
+  iconRetinaUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon-2x.png',
+  iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon.png',
+  shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
+})
 
 const Dashboard = ({ user, onSwitchToProfile }) => {
   const [listings, setListings] = useState([])
@@ -260,6 +271,20 @@ const Dashboard = ({ user, onSwitchToProfile }) => {
   )
 }
 
+// Map Location Selector Component
+const LocationSelector = ({ position, setPosition }) => {
+  const map = useMapEvents({
+    click(e) {
+      setPosition({
+        lat: e.latlng.lat,
+        lng: e.latlng.lng
+      })
+    }
+  })
+
+  return position ? <Marker position={[position.lat, position.lng]} /> : null
+}
+
 // Add Listing Modal Component
 const AddListingModal = ({ user, onClose, onSuccess }) => {
   const [formData, setFormData] = useState({
@@ -267,10 +292,12 @@ const AddListingModal = ({ user, onClose, onSuccess }) => {
     description: '',
     rent: '',
     city: '',
+    address: '',
     room_type: '1BHK',
     gender_pref: 'Any',
     available_from: ''
   })
+  const [mapPosition, setMapPosition] = useState({ lat: 20.5937, lng: 78.9629 }) // Default center of India
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [error, setError] = useState('')
 
@@ -287,7 +314,9 @@ const AddListingModal = ({ user, onClose, onSuccess }) => {
         },
         body: JSON.stringify({
           ...formData,
-          user_id: user.user_id
+          user_id: user.user_id,
+          latitude: mapPosition.lat,
+          longitude: mapPosition.lng
         })
       })
 
@@ -390,6 +419,39 @@ const AddListingModal = ({ user, onClose, onSuccess }) => {
                 required
               />
             </div>
+          </div>
+
+          <div className="input-group">
+            <label>Full Address *</label>
+            <input
+              type="text"
+              name="address"
+              value={formData.address}
+              onChange={handleChange}
+              placeholder="Enter complete address with street, landmark, etc."
+              required
+            />
+          </div>
+
+          <div className="input-group">
+            <label>Select Location on Map *</label>
+            <p className="map-instruction">Click on the map to select the exact location of your property</p>
+            <div className="map-container">
+              <MapContainer 
+                center={[mapPosition.lat, mapPosition.lng]} 
+                zoom={5} 
+                style={{ height: '300px', width: '100%' }}
+              >
+                <TileLayer
+                  url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                  attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+                />
+                <LocationSelector position={mapPosition} setPosition={setMapPosition} />
+              </MapContainer>
+            </div>
+            <p className="coordinates-display">
+              📍 Selected: Latitude {mapPosition.lat.toFixed(6)}, Longitude {mapPosition.lng.toFixed(6)}
+            </p>
           </div>
 
           <div className="input-group">

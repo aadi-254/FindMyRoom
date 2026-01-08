@@ -130,7 +130,7 @@ router.get('/profile/:userId', async (req, res) => {
     const { userId } = req.params;
     
     const [users] = await pool.execute(
-      'SELECT user_id, full_name, email, role, phone, gender, bio, created_at FROM users WHERE user_id = ?',
+      'SELECT user_id, full_name, email, role, phone, gender, bio, points, created_at FROM users WHERE user_id = ?',
       [userId]
     );
 
@@ -144,7 +144,26 @@ router.get('/profile/:userId', async (req, res) => {
     res.status(500).json({ message: 'Internal server error' });
   }
 });
+// Get user by ID (alias for profile endpoint)
+router.get('/user/:userId', async (req, res) => {
+  try {
+    const { userId } = req.params;
+    
+    const [users] = await pool.execute(
+      'SELECT user_id, full_name, email, role, phone, gender, bio, points, created_at FROM users WHERE user_id = ?',
+      [userId]
+    );
 
+    if (users.length === 0) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    res.json({ user: users[0] });
+  } catch (error) {
+    console.error('User fetch error:', error);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+});
 // Update user profile
 router.put('/profile/:userId', async (req, res) => {
   try {
@@ -167,7 +186,7 @@ router.put('/profile/:userId', async (req, res) => {
 
     // Get updated user data
     const [users] = await pool.execute(
-      'SELECT user_id, full_name, email, role, phone, gender, bio, created_at FROM users WHERE user_id = ?',
+      'SELECT user_id, full_name, email, role, phone, gender, bio, points, created_at FROM users WHERE user_id = ?',
       [userId]
     );
 

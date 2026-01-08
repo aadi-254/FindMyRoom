@@ -101,6 +101,7 @@ CREATE TABLE lead_requests (
     longitude DECIMAL(10,6),
     additional_details TEXT,
     confirmed BOOLEAN DEFAULT FALSE,
+    confirmation_token VARCHAR(255) UNIQUE,
     listing_id INT DEFAULT NULL,
     points_awarded BOOLEAN DEFAULT FALSE,
     reward_points INT DEFAULT 0,

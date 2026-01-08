@@ -17,6 +17,33 @@ const Profile = ({ user, onUserUpdate, onBackToSearch }) => {
   const [errors, setErrors] = useState({})
   const [isLoading, setIsLoading] = useState(false)
   const [successMessage, setSuccessMessage] = useState('')
+  const [currentUser, setCurrentUser] = useState(user)
+
+  // Fetch updated user data including points
+  const fetchUserData = async () => {
+    try {
+      const response = await fetch(`http://localhost:5000/api/auth/user/${user.user_id}`)
+      
+      if (!response.ok) {
+        console.error('Failed to fetch user data:', response.status, response.statusText)
+        return
+      }
+      
+      const data = await response.json()
+      
+      if (data.user) {
+        setCurrentUser(data.user)
+        // Update localStorage
+        localStorage.setItem('user', JSON.stringify(data.user))
+        // Update parent component
+        if (onUserUpdate) {
+          onUserUpdate(data.user)
+        }
+      }
+    } catch (error) {
+      console.error('Error fetching user data:', error)
+    }
+  }
 
   // Initialize form data with user data
   useEffect(() => {
@@ -31,8 +58,16 @@ const Profile = ({ user, onUserUpdate, onBackToSearch }) => {
       }
       setFormData(userData)
       setOriginalData(userData)
+      setCurrentUser(user)
     }
   }, [user])
+
+  // Fetch user data on component mount and when switching to profile tab
+  useEffect(() => {
+    if (user?.user_id) {
+      fetchUserData()
+    }
+  }, [user?.user_id, activeTab])
 
   const handleChange = (e) => {
     const { name, value } = e.target
@@ -339,14 +374,14 @@ const Profile = ({ user, onUserUpdate, onBackToSearch }) => {
               <div className="stat-icon">🏆</div>
               <div className="stat-info">
                 <span className="stat-label">Reward Points</span>
-                <span className="stat-value highlight-points">{user?.points || 0}</span>
+                <span className="stat-value highlight-points">{currentUser?.points || 0}</span>
               </div>
             </div>
             <div className="stat-item">
               <div className="stat-icon">📅</div>
               <div className="stat-info">
                 <span className="stat-label">Joined</span>
-                <span className="stat-value">{formatDate(user?.created_at)}</span>
+                <span className="stat-value">{formatDate(currentUser?.created_at)}</span>
               </div>
             </div>
             <div className="stat-item">

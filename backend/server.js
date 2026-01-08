@@ -5,6 +5,7 @@ import authRoutes from './routes/auth.js';
 import listingsRoutes from './routes/listings.js';
 import requestsRoutes from './routes/requests.js';
 import leadRequestsRoutes from './routes/leadRequests.js';
+import paymentsRoutes from './routes/payments.js';
 import express from 'express';
 
 dotenv.config();
@@ -80,6 +81,14 @@ async function startServer() {
   app.use('/api/listings', listingsRoutes);
   app.use('/api/requests', requestsRoutes);
   app.use('/api/lead-requests', leadRequestsRoutes);
+  app.use('/api/payments', paymentsRoutes);
+
+  console.log('✅ Routes registered:');
+  console.log('   - /api/auth');
+  console.log('   - /api/listings');
+  console.log('   - /api/requests');
+  console.log('   - /api/lead-requests');
+  console.log('   - /api/payments');
 
   app.listen(PORT, () => console.log(`Server is running on port ${PORT}`));
 }
