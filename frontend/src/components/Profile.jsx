@@ -8,7 +8,7 @@ const Profile = ({ user, onUserUpdate, onBackToSearch }) => {
   const [formData, setFormData] = useState({
     full_name: '',
     email: '',
-    phone: '',
+    phone: '',             
     gender: '',
     bio: '',
     role: ''

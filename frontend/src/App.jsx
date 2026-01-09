@@ -6,6 +6,7 @@ import Login from './components/Login'
 import Signup from './components/Signup'
 import Search from './components/Search'
 import SearchWithPayment from './components/SearchWithPayment'
+import SearchWithPaymentNew from './components/SearchWithPaymentNew';
 import Navbar from './components/Navbar'
 import Profile from './components/Profile'
 import Dashboard from './components/Dashboard'
@@ -110,7 +111,7 @@ function App() {
       )}
       
       {currentView === 'search' && user && (
-        <SearchWithPayment user={user} />
+        <SearchWithPaymentNew user={user} />
       )}
       
       {currentView === 'dashboard' && user && (

@@ -105,6 +105,110 @@
     box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
 }
 
+/* Plan Examples */
+.plan-examples {
+    text-align: left;
+    margin-bottom: 30px;
+}
+
+.plan-examples h3 {
+    color: #2c3e50;
+    font-size: 20px;
+    margin-bottom: 20px;
+    text-align: center;
+}
+
+.example-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 15px;
+}
+
+.example-card {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    padding: 20px;
+    border-radius: 12px;
+    text-align: center;
+    color: white;
+}
+
+.example-houses {
+    font-size: 18px;
+    font-weight: 700;
+    margin-bottom: 8px;
+}
+
+.example-duration {
+    font-size: 14px;
+    opacity: 0.9;
+    margin-bottom: 8px;
+}
+
+.example-price {
+    font-size: 22px;
+    font-weight: 700;
+}
+
+/* Access Banner */
+.search-with-access {
+    padding-top: 20px;
+}
+
+.access-banner {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 20px 30px;
+    border-radius: 12px;
+    margin: 0 20px 20px 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+}
+
+.access-info-left {
+    display: flex;
+    gap: 30px;
+    flex-wrap: wrap;
+}
+
+.access-item {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.access-label {
+    font-size: 13px;
+    opacity: 0.9;
+}
+
+.access-value {
+    font-size: 16px;
+    font-weight: 600;
+}
+
+.access-value.expiring-soon {
+    color: #ffeb3b;
+    animation: pulse 1.5s infinite;
+}
+
+@keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.6; }
+}
+
+.expiry-warning {
+    background: #fff3cd;
+    color: #856404;
+    padding: 15px 30px;
+    margin: 0 20px 20px 20px;
+    border-radius: 8px;
+    border-left: 4px solid #ffc107;
+    font-weight: 500;
+    text-align: center;
+}
+
 .search-with-payment {
     position: relative;
 }

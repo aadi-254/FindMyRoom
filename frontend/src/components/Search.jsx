@@ -2,7 +2,7 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react'
 import PropertyDetailsModal from './PropertyDetailsModal'
 
-const Search = ({ user, selectedArea, accessInfo }) => {
+const Search = ({ user, selectedArea, accessInfo, restrictedArea, accessibleHouses, onViewHouse }) => {
   const [map, setMap] = useState(null)
   const [searchInput, setSearchInput] = useState('')
   const [geocoder, setGeocoder] = useState(null)
@@ -43,12 +43,24 @@ const Search = ({ user, selectedArea, accessInfo }) => {
 
   // Fetch properties from backend
   const fetchProperties = async (filters = {}) => {
+    // If accessibleHouses are provided (from payment), use them directly
+    if (accessibleHouses && accessibleHouses.length > 0) {
+      console.log('✅ Using accessible houses from payment:', accessibleHouses.length)
+      console.log('📋 Accessible houses:', accessibleHouses.map(h => ({ id: h.listing_id, type: h.room_type, rent: h.rent })))
+      setProperties(accessibleHouses)
+      return accessibleHouses
+    } else {
+      console.log('⚠️ No accessible houses provided, fetching from API')
+      console.log('  - accessibleHouses:', accessibleHouses)
+      console.log('  - restrictedArea:', restrictedArea)
+    }
+
     try {
       const queryParams = new URLSearchParams()
       
       // Add area parameter if available (for payment-based filtering)
-      if (selectedArea) {
-        queryParams.append('area', selectedArea)
+      if (selectedArea || restrictedArea) {
+        queryParams.append('area', selectedArea || restrictedArea)
       }
       
       // Add user_id for payment verification
@@ -82,17 +94,17 @@ const Search = ({ user, selectedArea, accessInfo }) => {
     }
   }
 
-  // Load properties on component mount
+  // Load properties on component mount or when accessibleHouses changes
   useEffect(() => {
-    fetchProperties()
-  }, [])
+    fetchProperties(searchFilters)
+  }, [accessibleHouses])
 
-  // Reload properties when selectedArea changes (for payment-based access)
+  // Reload properties when selectedArea or restrictedArea changes
   useEffect(() => {
-    if (selectedArea) {
+    if (selectedArea || restrictedArea) {
       fetchProperties(searchFilters)
     }
-  }, [selectedArea])
+  }, [selectedArea, restrictedArea])
 
   // Calculate distance between two coordinates using Haversine formula
   const calculateDistance = (lat1, lon1, lat2, lon2) => {
@@ -419,13 +431,18 @@ const Search = ({ user, selectedArea, accessInfo }) => {
       if (property) {
         setSelectedProperty(property)
         setIsModalOpen(true)
+        
+        // Call onViewHouse callback if provided (for payment tracking)
+        if (onViewHouse) {
+          onViewHouse(property)
+        }
       }
     }
 
     return () => {
       delete window.openPropertyDetails
     }
-  }, [properties])
+  }, [properties, onViewHouse])
 
   // Update markers when properties change
   useEffect(() => {
